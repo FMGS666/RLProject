@@ -21,7 +21,6 @@ class Agent(object):
             gamma: float = 1e-0, 
             n_steps: int = 1, 
             debug: int = 0, 
-            info_field: str = "player", 
             seed: int = 236 ,
             verbose: int = 1, 
             name: str = "GenericRlAgent"
@@ -35,7 +34,6 @@ class Agent(object):
         self._debug = debug
         self._seed = seed
         self.verbose = verbose
-        self.consider_height = consider_height
         self.name = name
         self.alpha = alpha
         self.gamma = gamma
