@@ -5,7 +5,6 @@ from gymnasium import spaces
 from typing import Any
 from pettingzoo import AECEnv
 from pettingzoo.utils import agent_selector, wrappers
-from ..utils.Connect4Logic import *
 
 class Connect4Environment(AECEnv):
     """
