@@ -5,9 +5,9 @@ from gymnasium import spaces
 from typing import Any
 from pettingzoo import AECEnv
 from pettingzoo.utils import agent_selector, wrappers
+from ..utils.Connect4Logic import *
 
-
-class ConnectFourEnvironment(AECEnv):
+class Connect4Environment(AECEnv):
     """
     
     """
@@ -21,11 +21,13 @@ class ConnectFourEnvironment(AECEnv):
             self, 
             grid_height: int = 6, 
             grid_width: int = 7, 
-            render_mode: Any = None
+            render_mode: Any = None,
+            debug: int = 1
         ) -> None:
         """
         
         """
+        self.debug = debug
         self.grid_height = grid_height
         self.grid_width = grid_width
         self.render_mode = render_mode
@@ -38,16 +40,15 @@ class ConnectFourEnvironment(AECEnv):
                 agent: self.action_space for agent in self.agents
             }
         )
-        self.legal_moves = spaces.Box(
-            low = 0, high = 1, shape = (self.grid_width, ), dtype = np.int8 
-        )
+        # self.legal_moves = spaces.Box(
+        #     low = 0, high = 1, shape = (self.grid_width, ), dtype = np.int8 
+        # )
+        self.legal_moves = np.ones((self.grid_width, ), dtype = np.int8)
         self.observation_space = spaces.Dict(
             {
-                agent: {
-                    "observation": spaces.Box(
-                        low = 0, high = 1, shape = self.board_shape + (2, ), dtype = np.int8
-                    )
-                }
+                agent: spaces.Box(
+                    low = 0, high = 1, shape = self.board_shape + (2, ), dtype = np.int8
+                )    
                 for agent in self.agents
             }
         )
@@ -56,10 +57,13 @@ class ConnectFourEnvironment(AECEnv):
         self.terminations = {agent: False for agent in self.agents}
         self.truncations = {agent: False for agent in self.agents}
         self.rewards = {agent: 0 for agent in self.agents}
+        self._cumulative_rewards = {agent: 0 for agent in self.agents}
+        if self.debug:
+            print(f"self._agent_selector {self._agent_selector} type {type(self._agent_selector)}")
 
     def observation_space(
             self, 
-            agent: AgentID
+            agent: str
         ) -> spaces.Box:
         """
         
@@ -68,7 +72,7 @@ class ConnectFourEnvironment(AECEnv):
 
     def action_space(
             self, 
-            agent: AgentID
+            agent: str
         ) -> spaces.Box:
         """
         
@@ -77,7 +81,7 @@ class ConnectFourEnvironment(AECEnv):
 
     def observe(
             self, 
-            agent_id: pettingzoo.AgentID
+            agent_id: int
         ) -> dict[str, spaces.Box]:
         """
                 
@@ -95,7 +99,7 @@ class ConnectFourEnvironment(AECEnv):
         ).astype(np.int8)
         return {"observation": observation, "action_mask": self.legal_moves}
     
-     def __update_legal_moves(
+    def __update_legal_moves(
             self,
             action: int
         ) -> None:
@@ -122,6 +126,12 @@ class ConnectFourEnvironment(AECEnv):
         target_index = (target_row_index, action)
         self.board[target_index] = piece
 
+    def update_board(
+            self, 
+            action: int
+        ) -> None:
+        self.__update_board(action)
+
     def step(
             self,
             action: int
@@ -129,13 +139,15 @@ class ConnectFourEnvironment(AECEnv):
         """
         
         """
+        if self.debug:
+            print(f"self._agent_selector {self._agent_selector}")
         if self.truncations[self.agent_selection] or self.terminations[self.agent_selection]:
             return self._was_dead_step(action)
         assert self.legal_moves[action] == 1, "illegal move played"
         self.__update_board(action)
         self.__update_legal_moves(action)
         is_draw = self.check_for_draw()
-        is_won = self.check_for_winner
+        is_won = self.check_for_winner()
         next_agent = self._agent_selector.next()
         if is_won:
             self.rewards[self.agent_selection] += 1
@@ -149,7 +161,6 @@ class ConnectFourEnvironment(AECEnv):
         if self.render_mode == "human":
             self.render()
 
-        
     def check_for_draw(
             self
         ) -> bool:
@@ -174,7 +185,8 @@ class ConnectFourEnvironment(AECEnv):
             self
         ) -> bool:
         piece = self.agents.index(self.agent_selection) + 1 # ??
-
+        if self.debug: 
+            print(f"piece {piece} type {type(piece)}")
         for c in range(self.grid_width - 3):
             for r in range(self.grid_height):
                 if (

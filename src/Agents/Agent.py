@@ -13,9 +13,8 @@ import numpy as np
 class Agent(object):
     def __init__(
             self, 
-            width: int, 
-            height: int, 
-            n_actions: int = 2, 
+            grid_width: int = 7, 
+            grid_height: int = 6,
             epsilon: float = 1e-1,
             alpha: float = 5e-1,
             gamma: float = 1e-0, 
@@ -27,9 +26,8 @@ class Agent(object):
         ) -> None:
         
         # initializing the attributes
-        self._width = width
-        self._height = height
-        self._n_actions = n_actions
+        self.grid_width = grid_width
+        self.grid_height = grid_height
         self.epsilon = epsilon
         self._debug = debug
         self._seed = seed
@@ -39,6 +37,7 @@ class Agent(object):
         self.gamma = gamma
         self.n_steps = n_steps
 
+        ## MODIFY THIS FOR THE CURRENT USE 
         # initializing dimensions for the action-state matrix
         self._n_possible_vertical_distances = self._height * 2
         self._n_possible_horizontal_distances = self._width
@@ -194,7 +193,7 @@ class Agent(object):
     def __generate_description_string(
             self
         ) -> str:
-        description_string = f"{self.name}_maxScore{self.max_score}_w{self._width}_h{self._height}_nAct{self._n_actions}_eps{self.epsilon}_nSteps{self.n_steps}_gamma{self.gamma}_alpha{self.alpha}"
+        description_string = f"{self.name}_maxScore{self.max_score}_nAct{self._n_actions}_eps{self.epsilon}_nSteps{self.n_steps}_gamma{self.gamma}_alpha{self.alpha}"
         return description_string
 
     def generate_description_string():
