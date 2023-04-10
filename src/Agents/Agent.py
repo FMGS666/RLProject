@@ -77,12 +77,16 @@ class Agent(object):
         encoded_observation = self.__encode_observation(
             obs
         )
-        state_value_matrix = self.action_state_value_dictionary[state_index]
+        if encoded_observation in self.observed_states:
+            state_values = self.action_state_value_dictionary[encoded_observation]
+        else:
+            state_values = np.zeros((self.grid_width, ), dtype = np.float32)
+            self.action_state_value_dictionary[encoded_observation] = state_values
         assert (
-            state_value_matrix.shape[0] == self.grid_width and 
-            len(state_value_matrix.shape) == 1
-        ), f"state value matrix has wrong shape of {state_value_matrix.shape}"
-        return state_value_matrix
+            state_values.shape[0] == self.grid_width and 
+            len(state_values.shape) == 1
+        ), f"state value matrix has wrong shape of {state_values.shape}"
+        return state_values
 
     def _get_action_state_value(
             self,
@@ -149,7 +153,6 @@ class Agent(object):
         ) -> int:
         return self.__policy(
             obs, 
-            info, 
             count_action_type, 
         )
     

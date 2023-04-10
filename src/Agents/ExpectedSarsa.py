@@ -1,4 +1,4 @@
-from Agents.Agent import * 
+from .Agent import * 
 
 
 class ExpectedSarsa(Agent):
@@ -13,7 +13,6 @@ class ExpectedSarsa(Agent):
             seed: int = 236,
             verbose: int = 1,
             name: str = "ExpectedSarsa",
-            render: bool = False
         ) -> None:
         super(ExpectedSarsa, self).__init__(
             grid_width, 
@@ -26,7 +25,6 @@ class ExpectedSarsa(Agent):
             gamma = gamma, 
             alpha = alpha, 
         )
-        self.render = render
 
     def policy(
             self, 
@@ -47,7 +45,7 @@ class ExpectedSarsa(Agent):
             obs1, 
         )
         greedy_action = np.argmax(state_value)
-        policy_distribution = np.full(shape = self._n_actions, fill_value = self.epsilon/self._n_actions)
+        policy_distribution = np.full(shape = self.grid_width, fill_value = self.epsilon/self.grid_width)
         policy_distribution[greedy_action] += (1 - self.epsilon)
         action_state_value = np.dot(state_value.T, policy_distribution)
         sarsa_value = reward + self.gamma * action_state_value
@@ -59,14 +57,7 @@ class ExpectedSarsa(Agent):
             obs: np.ndarray, 
             obs1: np.ndarray,
             reward: float, 
-            done: bool,
         ) -> float:
-        if self._debug:
-            print(f"\n\n__compute_update_value\n\tobs {obs} info {info}, done {done}\n\ttype(obs) {type(obs)} type(info) {type(info)} type(done) {type(done)}")
-        if done:
-            if self._debug: 
-                print(f"done == {done}, returning 0 as action-state value")
-            return 0
         current_action_state_value = self._get_action_state_value(
             obs, 
             action
@@ -85,30 +76,38 @@ class ExpectedSarsa(Agent):
             obs: np.ndarray, 
             obs1: np.ndarray, 
             reward: float, 
-            done: bool
         ) -> None:
-        if self._debug:
+        if self.debug:
             print(f"\n__update_action_state_value\n\tobs {obs} info {info}, {type(obs)} type(info) {type(info)}")
         update_value = self.__compute_update_value(
             action, 
             obs, 
             obs1, 
             reward, 
-            done
         )
-        if self._debug > 1:
+        if self.debug > 1:
             print(f"\n\nupdate_value {update_value} for obs {obs}, info {info[self._info_field][-1]}")
         self._set_action_state_value(
-            obs, 
+            obs,
             action, 
-            update_value, 
+            update_value,
         )
 
     def __train_one_episode_against_itself(
             self,
             env: AECEnv, 
         ) -> None:
-        ...
+        idx = 0
+        agent_to_play = env.agents[idx]
+        obs, legal_moves = env.observe(agent_to_play).values()  
+        while not env.game_over:
+            agent_to_play = env.agents[idx]
+            obs1, legal_moves = env.observe(agent_to_play).values()
+            action = self.policy(obs)
+            reward = env.step(action)
+            self.__update_action_state_value(action, obs, obs1, reward)
+            idx = (idx + 1) % 2
+            obs = obs1
 
     def __print_training_description_message(
             self, 
@@ -138,32 +137,18 @@ class ExpectedSarsa(Agent):
         """
         print(message)
 
-    def __train_n_episodes(
+    def train_n_episodes(
             self, 
             env: AECEnv, 
             n_episodes: int, 
             patience: int = 1e+6,
             dump: bool = True 
         ) -> None:
-        if self.verbose:
-            self.__print_training_description_message(
-                n_episodes, 
-                episodes_scores, 
-                True
-            )
         for episode in tqdm(range(n_episodes)):
-            self.__train_one_episode(env)
-            if episode % 10000 == 0 and self.verbose > 1:
+            self.__train_one_episode_against_itself(env)
+            if episode % 10 == 0 and self.verbose > 1:
                 print("\rEpisode {}/{}, Score: {}, Max score: {}".format(episode, n_episodes, episodes_scores[-1], self.max_score), end="")
                 sys.stdout.flush()
         if self.max_score and dump:
             self._dump()
             self._save_history(episodes_lengths, episodes_scores)
-
-    def train_n_episodes(
-            self, 
-            env: gym.Env, 
-            n_episodes: int,
-            patience: int = 1e+6
-        ) -> None:
-        return self.__train_n_episodes(env, n_episodes)

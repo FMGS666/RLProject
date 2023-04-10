@@ -17,7 +17,7 @@ class Connect4Environment(AECEnv):
         "render_fps": 2,
     }
     def __init__(
-            self, 
+            self,
             grid_height: int = 6, 
             grid_width: int = 7, 
             render_mode: Any = None,
@@ -57,8 +57,7 @@ class Connect4Environment(AECEnv):
         self.truncations = {agent: False for agent in self.agents}
         self.rewards = {agent: 0 for agent in self.agents}
         self._cumulative_rewards = {agent: 0 for agent in self.agents}
-        if self.debug:
-            print(f"self._agent_selector {self._agent_selector} type {type(self._agent_selector)}")
+        self.game_over = False
 
     def observation_space(
             self, 
@@ -107,9 +106,15 @@ class Connect4Environment(AECEnv):
         updates legal moves after each call to self.step()
     
         """
-        legal_moves = np.argwhere(self.board[:, -1] == 0)
+        legal_moves = np.argwhere(self.board[0, :] != 0)
         for legal_move in legal_moves:
-            self.legal_moves[legal_move] = 1
+            self.legal_moves[legal_move] = 0
+
+    def update_legal_moves(
+            self, 
+            action: int
+        ) -> None:
+        return self.__update_legal_moves(action)
 
     def __update_board(
             self, 
@@ -125,24 +130,19 @@ class Connect4Environment(AECEnv):
         target_index = (target_row_index, action)
         self.board[target_index] = piece
 
-    def update_board(
-            self, 
-            action: int
-        ) -> None:
-        self.__update_board(action)
-
     def step(
             self,
             action: int
-        ) -> None:
+        ) -> int:
         """
         
         """
-        if self.debug:
-            print(f"self._agent_selector {self._agent_selector}")
         if self.truncations[self.agent_selection] or self.terminations[self.agent_selection]:
             return self._was_dead_step(action)
-        assert self.legal_moves[action] == 1, "illegal move played"
+        if self.legal_moves[action] != 1:
+            self.game_over = True
+            self.rewards[self.agent_selection] -= 1
+            return -100
         self.__update_board(action)
         self.__update_legal_moves(action)
         is_draw = self.check_for_draw()
@@ -152,13 +152,16 @@ class Connect4Environment(AECEnv):
             self.rewards[self.agent_selection] += 1
             self.rewards[next_agent] -= 1
             self.terminations = {i: True for i in self.agents}
+            self.game_over = True
+            return 100
         elif is_draw:
             self.terminations = {i: True for i in self.agents}
+            self.game_over = True
+            return 0
         else:
             self.agent_selection = next_agent
         self._accumulate_rewards()
-        if self.render_mode == "human":
-            self.render()
+        return 1
 
     def check_for_draw(
             self
@@ -184,8 +187,6 @@ class Connect4Environment(AECEnv):
             self
         ) -> bool:
         piece = self.agents.index(self.agent_selection) + 1 # ??
-        if self.debug: 
-            print(f"piece {piece} type {type(piece)}")
         for c in range(self.grid_width - 3):
             for r in range(self.grid_height):
                 if (

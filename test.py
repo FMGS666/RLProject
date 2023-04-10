@@ -2,10 +2,7 @@ from src.Environments.Connect4 import *
 from src.Agents.ExpectedSarsa import *
 
 env = Connect4Environment()
+agent = ExpectedSarsa()
+n_episodes = 100
 
-env.step(2)
-env.step(2)
-
-obs = env.observe("agent0")
-
-a = obs["observation"]
+agent.train_n_episodes(env, n_episodes)
