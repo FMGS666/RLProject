@@ -1,15 +1,13 @@
 from Agents.Agent import * 
 
 
-
 class ExpectedSarsa(Agent):
     def __init__(
             self, 
-            width: int, 
-            height: int, 
-            n_actions: int = 2,
-            alpha: float = 5e-1, 
+            grid_width: int = 7, 
+            grid_height: int = 6, 
             epsilon: float = 1e-1,
+            alpha: float = 5e-1, 
             gamma: float = 1e-0, 
             n_steps: int = 1, 
             debug: int = 0, 
@@ -19,9 +17,8 @@ class ExpectedSarsa(Agent):
             render: bool = False
         ) -> None:
         super(ExpectedSarsa, self).__init__(
-            width, 
-            height, 
-            n_actions, 
+            grid_width, 
+            grid_height, 
             epsilon = epsilon, 
             debug = debug,
             seed = seed, 
@@ -35,7 +32,7 @@ class ExpectedSarsa(Agent):
 
     def policy(
             self, 
-            obs: tuple,
+            obs: np.ndarray,
             count_action_type: bool = False, 
         ) -> int:
         return super(ExpectedSarsa, self)._policy(
@@ -45,7 +42,7 @@ class ExpectedSarsa(Agent):
     
     def __compute_step_value(
             self, 
-            obs1: tuple[int],
+            obs1: np.ndarray,
             reward
         ) -> float:
         state_value = self._get_state_value(
@@ -57,13 +54,12 @@ class ExpectedSarsa(Agent):
         action_state_value = np.dot(state_value.T, policy_distribution)
         sarsa_value = reward + self.gamma * action_state_value
         return sarsa_value
-
     
     def __compute_update_value(
             self, 
             action: int, 
-            obs: tuple, 
-            obs1: tuple,
+            obs: np.ndarray, 
+            obs1: np.ndarray,
             reward: float, 
             done: bool,
         ) -> float:
@@ -107,50 +103,15 @@ class ExpectedSarsa(Agent):
             print(f"\n\nupdate_value {update_value} for obs {obs}, info {info[self._info_field][-1]}")
         self._set_action_state_value(
             obs, 
-            info, 
             action, 
             update_value, 
         )
 
-    def __train_one_episode(
+    def __train_one_episode_against_itself(
             self,
-            env: gym.Env, 
-        ) -> tuple[int]:
-        obs, info = env.reset()
-        if self._debug > 1:
-            print(f"obs {obs} info {info}")
-        episode_length = 0
-        while True:
-            action = self.policy(
-                obs,
-                count_action_type = True
-            )
-            self._increment_counter_action_state(
-                obs, 
-                action   
-            )
-            # obs1, reward, done, _, info1 = env.step(action)
-            if self.render:
-                sys.stdout.write(env.render())
-                time.sleep(0.2) # FPS
-            if self._debug:
-                print(f"\n\n__train_one_episode\n\tobs {obs} info {info}, done {done}\n\ttype(obs) {type(obs)} type(info) {type(info)} type(done) {type(done)}")
-            self.__update_action_state_value(
-                action,
-                obs, 
-                obs1, 
-                reward, 
-                env, 
-                done
-            )
-            obs = obs1; info = info1
-            self.current_score = info1[self._score_field]
-            episode_length += 1
-            if done:
-                break
-        return episode_length
-
-
+            env: AECEnv, 
+        ) -> None:
+        ...
 
     def __print_training_description_message(
             self, 
@@ -166,12 +127,8 @@ class ExpectedSarsa(Agent):
 
         Parameters of the environment:
 
-            width ->  {self._width}
-            height -> {self._height}
-            
-        Size of action space :
-            
-            n_actions-> {self._n_actions}
+            grid_width ->  {self.grid_width}
+            grid_height -> {self.grid_height}
 
         Parameters of the agent: 
 
@@ -179,7 +136,6 @@ class ExpectedSarsa(Agent):
             gamma (discount_factor) -> {self.gamma}
             epsilon (exploration_rate) -> {self.epsilon}
             n_steps -> {self.n_steps}
-            prior -> {self._prior}
 
         """ if begin else \
         f"""
@@ -196,14 +152,11 @@ class ExpectedSarsa(Agent):
 
     def __train_n_episodes(
             self, 
-            env: gym.Env, 
+            env: AECEnv, 
             n_episodes: int, 
             patience: int = 1e+6,
             dump: bool = True 
-        ) -> tuple[list[int]]:
-        episodes_lengths = []
-        episodes_scores = []
-        episodes_with_no_improvement = 0
+        ) -> None:
         if self.verbose:
             self.__print_training_description_message(
                 n_episodes, 
@@ -211,18 +164,7 @@ class ExpectedSarsa(Agent):
                 True
             )
         for episode in tqdm(range(n_episodes)):
-            episode_length = self.__train_one_episode(env)
-            episodes_lengths.append(episode_length)
-            episodes_scores.append(self.current_score)
-            if self.max_score < self.current_score:
-                if self.verbose:
-                    print(f"New record at episode {episode}:\n\n\t New Best Score: {self.current_score} \t Old Best Score: {self.max_score}")
-                self.max_score = self.current_score
-                episodes_with_no_improvement = 0
-            else: 
-                episodes_with_no_improvement += 1
-            if episodes_with_no_improvement > patience:
-                break
+            self.__train_one_episode(env)
             if episode % 10000 == 0 and self.verbose > 1:
                 print("\rEpisode {}/{}, Score: {}, Max score: {}".format(episode, n_episodes, episodes_scores[-1], self.max_score), end="")
                 sys.stdout.flush()
@@ -235,7 +177,6 @@ class ExpectedSarsa(Agent):
         if self.max_score and dump:
             self._dump()
             self._save_history(episodes_lengths, episodes_scores)
-        return (episodes_lengths, episodes_scores)
 
     def train_n_episodes(
             self, 

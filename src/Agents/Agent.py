@@ -6,8 +6,11 @@ from collections import defaultdict
 
 import os, sys, re, json
 import gymnasium as gym
+
+from pettingzoo import AECEnv
+from pettingzoo.utils import agent_selector, wrappers
+
 import time
-import text_flappy_bird_gym
 import numpy as np
 
 
@@ -30,33 +33,18 @@ class Agent(object):
         self.grid_width = grid_width
         self.grid_height = grid_height
         self.epsilon = epsilon
-        self._debug = debug
-        self._seed = seed
+        self.debug = debug
+        self.seed = seed
         self.verbose = verbose
         self.name = name
         self.alpha = alpha
         self.gamma = gamma
         self.n_steps = n_steps
-
-        ## MODIFY THIS FOR THE CURRENT USE 
-        # initializing dimensions for the action-state matrix
-        self._n_possible_vertical_distances = self._height * 2
-        self._n_possible_horizontal_distances = self._width
-        self._n_possible_heights = self._height
-        self._action_state_target_dimension = (
-            self._n_possible_heights, 
-            self._n_possible_vertical_distances, 
-            self._n_possible_horizontal_distances, 
-            self._n_actions
-        ) if self.consider_height \
-            else (
-                self._n_possible_vertical_distances, 
-                self._n_possible_horizontal_distances, 
-                self._n_actions
-            )
         
         # initializing the action-state matrix
         self.action_state_value_dictionary = defaultdict(np.ndarray)
+
+        self.observed_states = dict(self.action_state_value_dictionary).keys()
 
         # initializing current score
         self.current_score = 0
@@ -84,7 +72,6 @@ class Agent(object):
         packed_observation = np.char.mod('%d', packed_observation)
         return "".join(packed_observation)
 
-    ## MODIFY THIS FOR THE CURRENT USE
     def _get_state_value(
             self,
             obs: np.ndarray,
@@ -93,9 +80,12 @@ class Agent(object):
             obs
         )
         state_value_matrix = self.action_state_value_dictionary[state_index]
+        assert (
+            state_value_matrix.shape[0] == self.grid_width and 
+            len(state_value_matrix.shape) == 1
+        ), f"state value matrix has wrong shape of {state_value_matrix.shape}"
         return state_value_matrix
 
-    ## MODIFY THIS FOR THE CURRENT USE
     def _get_action_state_value(
             self,
             obs: np.ndarray, 
@@ -104,10 +94,9 @@ class Agent(object):
         state_value = self._get_state_value(
             obs
         )
-        action_state_value = state_value[action_state_index]
+        action_state_value = state_value[action]
         return action_state_value
 
-    ## MODIFY THIS FOR THE CURRENT USE
     def _set_action_state_value(
             self,
             obs: np.ndarray,
@@ -117,12 +106,16 @@ class Agent(object):
         encoded_observation = self.__encode_observation(
             obs
         )
-        self.action_state_value_dictionary[encoded_observation][action] = value
+        if encoded_observation in self.observed_states:
+            self.action_state_value_dictionary[encoded_observation][action] = value
+        else:
+            state_values = np.zeros((self.grid_width, ), dtype = np.float32)
+            state_values[action] = value
+            self.action_state_value_dictionary[encoded_observation] = state_values
 
-    ## MODIFY THIS FOR THE CURRENT USE
     def _increment_counter_action_state(
             self,
-            obs: tuple[int],
+            obs: np.ndarray,
             action: int,             
         ) -> None:
         ...
@@ -130,13 +123,13 @@ class Agent(object):
 
     def __policy(
             self, 
-            obs: tuple, 
+            obs: np.ndarray, 
             count_action_type: bool = False, 
         ) -> int:
         state_value = self._get_state_value(
             obs,
         )
-        if self._debug:    
+        if self.debug:    
             assert state_value.shape[0] == self._n_actions and len(state_value.shape) == 1, \
                 f"The action_values array has an incorrect shape of {state_value.shape}"
         greedy = self._random_generator.random() >= self.epsilon
@@ -203,4 +196,4 @@ class Agent(object):
             filename: str | Path
         ) -> None:
         action_value_matrix = np.load(filename)
-        self.action_state_value_matrix = action_value_matrix 
+        self.action_state_value_matrix = action_value_matrix

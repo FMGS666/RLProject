@@ -1,5 +1,5 @@
 from src.Environments.Connect4 import *
-from src.utils.Connect4Utils import *
+from src.Agents.ExpectedSarsa import *
 
 env = Connect4Environment()
 
