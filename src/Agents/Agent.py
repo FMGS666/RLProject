@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from tqdm import tqdm 
 from typing import Callable
+from collections import defaultdict
 
 import os, sys, re, json
 import gymnasium as gym
@@ -54,17 +55,8 @@ class Agent(object):
                 self._n_actions
             )
         
-        ## MODIFY THIS FOR THE CURRENT USE
         # initializing the action-state matrix
-        self.action_state_value_matrix = np.zeros(
-            self._action_state_target_dimension
-        )
-
-        ## MODIFY THIS FOR THE CURRENT USE
-        # initializing the action-state counter matrix
-        self.action_state_counter_matrix = np.zeros(
-            self._action_state_target_dimension
-        )
+        self.action_state_value_dictionary = defaultdict(np.ndarray)
 
         # initializing current score
         self.current_score = 0
@@ -77,72 +69,55 @@ class Agent(object):
         # initializing random numbers generator
         self._random_generator = np.random.RandomState(seed)
 
-
-    ## MODIFY THIS FOR THE CURRENT USE
-    def __find_state_index(
-            self, 
-            obs: tuple[int],
-        ) -> tuple:
-        horizontal_distance, vertical_distance = obs
-        _, height = info[self._info_field]
-        return (height - 1, vertical_distance, horizontal_distance) if self.consider_height \
-            else (vertical_distance, horizontal_distance)
-
-    ## MODIFY THIS FOR THE CURRENT USE
-    def __find_action_state_index(
-            self, 
-            obs: tuple[int],
-            action: int, 
-        ) -> tuple:
-        if self.consider_height:
-            height, vertical_distance, horizontal_distance = self.__find_state_index(
-                obs,
-            )
-        else:
-            vertical_distance, horizontal_distance = self.__find_state_index(
-                obs, 
-            ) 
-        return (height - 1, vertical_distance, horizontal_distance, action) if self.consider_height \
-            else (vertical_distance, horizontal_distance, action)
+    @staticmethod
+    def __encode_observation(
+            obs: np.ndarray,
+            axis: int = 1
+        ) -> str:
+        """
+        
+        encodes the board in a useful representation for the state    
+        
+        """
+        assert len(obs.shape) == 3
+        packed_observation = np.packbits(obs, axis = axis).flatten()
+        packed_observation = np.char.mod('%d', packed_observation)
+        return "".join(packed_observation)
 
     ## MODIFY THIS FOR THE CURRENT USE
     def _get_state_value(
             self,
-            obs: tuple[int],
+            obs: np.ndarray,
         ) -> np.ndarray:
-        state_index = self.__find_state_index(
-            obs, 
+        encoded_observation = self.__encode_observation(
+            obs
         )
-        if self._debug > 1:
-            print(f"state_index {state_index}")
-        state_value_matrix = self.action_state_value_matrix[state_index]
+        state_value_matrix = self.action_state_value_dictionary[state_index]
         return state_value_matrix
 
     ## MODIFY THIS FOR THE CURRENT USE
     def _get_action_state_value(
             self,
-            obs: tuple[int], 
+            obs: np.ndarray, 
             action: int,             
         ) -> float:
-        action_state_index = self.__find_action_state_index(
-            obs,
-            action,  
+        state_value = self._get_state_value(
+            obs
         )
-        action_state_value = self.action_state_value_matrix[action_state_index]
+        action_state_value = state_value[action_state_index]
         return action_state_value
 
     ## MODIFY THIS FOR THE CURRENT USE
     def _set_action_state_value(
             self,
-            obs: tuple[int],
+            obs: np.ndarray,
             action: int,
             value: float,              
         ) -> None:
-        action_state_index = self.__find_action_state_index(
-            obs,
-            action,  
+        encoded_observation = self.__encode_observation(
+            obs
         )
-        self.action_state_value_matrix[action_state_index] = value
+        self.action_state_value_dictionary[encoded_observation][action] = value
 
     ## MODIFY THIS FOR THE CURRENT USE
     def _increment_counter_action_state(
@@ -150,12 +125,9 @@ class Agent(object):
             obs: tuple[int],
             action: int,             
         ) -> None:
-        action_state_index = self.__find_action_state_index(
-            obs,
-            action, 
-        )
-        self.action_state_counter_matrix[action_state_index] +=1
-    
+        ...
+
+
     def __policy(
             self, 
             obs: tuple, 

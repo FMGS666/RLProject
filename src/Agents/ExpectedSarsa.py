@@ -129,7 +129,7 @@ class ExpectedSarsa(Agent):
                 obs, 
                 action   
             )
-            obs1, reward, done, _, info1 = env.step(action)
+            # obs1, reward, done, _, info1 = env.step(action)
             if self.render:
                 sys.stdout.write(env.render())
                 time.sleep(0.2) # FPS

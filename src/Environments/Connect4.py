@@ -80,7 +80,7 @@ class Connect4Environment(AECEnv):
 
     def observe(
             self, 
-            agent_id: int
+            agent_id: str
         ) -> dict[str, spaces.Box]:
         """
                 
