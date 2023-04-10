@@ -22,7 +22,6 @@ class Agent(object):
             epsilon: float = 1e-1,
             alpha: float = 5e-1,
             gamma: float = 1e-0, 
-            n_steps: int = 1, 
             debug: int = 0, 
             seed: int = 236 ,
             verbose: int = 1, 
@@ -39,7 +38,6 @@ class Agent(object):
         self.name = name
         self.alpha = alpha
         self.gamma = gamma
-        self.n_steps = n_steps
         
         # initializing the action-state matrix
         self.action_state_value_dictionary = defaultdict(np.ndarray)
@@ -158,7 +156,7 @@ class Agent(object):
     def __generate_description_string(
             self
         ) -> str:
-        description_string = f"{self.name}_maxScore{self.max_score}_nAct{self._n_actions}_eps{self.epsilon}_nSteps{self.n_steps}_gamma{self.gamma}_alpha{self.alpha}"
+        description_string = f"{self.name}_maxScore{self.max_score}_nAct{self._n_actions}_eps{self.epsilon}_gamma{self.gamma}_alpha{self.alpha}"
         return description_string
 
     def generate_description_string():

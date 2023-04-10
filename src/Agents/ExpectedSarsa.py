@@ -9,7 +9,6 @@ class ExpectedSarsa(Agent):
             epsilon: float = 1e-1,
             alpha: float = 5e-1, 
             gamma: float = 1e-0, 
-            n_steps: int = 1, 
             debug: int = 0, 
             seed: int = 236,
             verbose: int = 1,
@@ -26,7 +25,6 @@ class ExpectedSarsa(Agent):
             name = name,
             gamma = gamma, 
             alpha = alpha, 
-            n_steps = n_steps
         )
         self.render = render
 
@@ -84,10 +82,9 @@ class ExpectedSarsa(Agent):
     def __update_action_state_value(
             self,
             action: int, 
-            obs: tuple, 
-            obs1: tuple, 
-            reward: float,
-            env: gym.Env, 
+            obs: np.ndarray, 
+            obs1: np.ndarray, 
+            reward: float, 
             done: bool
         ) -> None:
         if self._debug:
@@ -117,10 +114,10 @@ class ExpectedSarsa(Agent):
             self, 
             n_episodes: int, 
             episodes_scores: list,
-            begin: bool
         ) -> None:
         message = f"""
-        
+        _________________________________________
+
         Training TemporalDifferenceAgent for:
 
             n_episodes -> {n_episodes}
@@ -135,17 +132,8 @@ class ExpectedSarsa(Agent):
             alpha (step_size) -> {self.alpha}
             gamma (discount_factor) -> {self.gamma}
             epsilon (exploration_rate) -> {self.epsilon}
-            n_steps -> {self.n_steps}
 
-        """ if begin else \
-        f"""
-        
-        Trained for {n_episodes}:
-
-            best score -> {self.max_score}
-            average score -> {np.mean(episodes_scores)}
-            std -> {np.std(episodes_scores)}
-
+        ___________________________________________
 
         """
         print(message)
@@ -168,12 +156,6 @@ class ExpectedSarsa(Agent):
             if episode % 10000 == 0 and self.verbose > 1:
                 print("\rEpisode {}/{}, Score: {}, Max score: {}".format(episode, n_episodes, episodes_scores[-1], self.max_score), end="")
                 sys.stdout.flush()
-        if self.verbose:
-            self.__print_training_description_message(
-                n_episodes, 
-                episodes_scores, 
-                False
-            )
         if self.max_score and dump:
             self._dump()
             self._save_history(episodes_lengths, episodes_scores)
