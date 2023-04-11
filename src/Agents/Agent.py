@@ -160,7 +160,7 @@ class Agent(object):
     def __generate_description_string(
             self
         ) -> str:
-        description_string = f"{self.name}_maxScore{self.max_score}_nAct{self._n_actions}_eps{self.epsilon}_gamma{self.gamma}_alpha{self.alpha}"
+        description_string = f"{self.name}_maxScore{self.max_score}_eps{self.epsilon}_gamma{self.gamma}_alpha{self.alpha}"
         return description_string
 
     def generate_description_string():
@@ -183,15 +183,17 @@ class Agent(object):
 
     def _dump(
             self,
-            path_name: str | Path = ".\ESAgents"
+            path_name: str | Path = ".\TrainedAgents"
         ) -> None:
-        description_string = self.__generate_description_string() + ".npy"
+        description_string = self.__generate_description_string() + ".json"
         file_name = os.path.join(path_name, description_string)
-        assert re.match(".*\.npy", file_name), \
+        assert re.match(".*\.json", file_name), \
             "FileNameError: file_name provided is in the wrong format, please save array as .npy"
         if self.verbose:
             print(f"\nDumping agent:\n\tdescription_string -> {description_string}\n\n\tpath_name -> {path_name}\n\n\tfilename -> {file_name}")
-        np.save(file_name, self.action_state_value_matrix)
+        action_state_value_dictionary = {key: list([float(val) for val in value]) for key, value in self.action_state_value_dictionary.items()}
+        with open(file_name, "w") as file_handle:
+            json.dump(action_state_value_dictionary, file_handle)
 
     def load(
             self, 

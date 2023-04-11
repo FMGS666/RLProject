@@ -114,7 +114,6 @@ class ExpectedSarsa(Agent):
     def __print_training_description_message(
             self, 
             n_episodes: int, 
-            episodes_scores: list,
         ) -> None:
         message = f"""
         _________________________________________
@@ -146,11 +145,12 @@ class ExpectedSarsa(Agent):
             patience: int = 1e+6,
             dump: bool = True 
         ) -> None:
+        if self.verbose:
+            self.__print_training_description_message(n_episodes)
         for episode in tqdm(range(n_episodes)):
             self.__train_one_episode_against_itself(env)
             if self.verbose > 1:
                 print("\rEpisode {}/{}, action_counts: {}".format(episode, n_episodes, self.action_counts), end="")
                 sys.stdout.flush()
-        if self.max_score and dump:
-            self._dump()
-            self._save_history(episodes_lengths, episodes_scores)
+        if dump:
+            self._dump(".\TrainedAgents\ExpectedSarsa")
