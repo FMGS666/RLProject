@@ -20,11 +20,10 @@ class raw_env(AECEnv):
         self.board = Board()
 
         self.agents = ["player_1", "player_2"]
-        self.possible_agents = self.agents[:]  #delete this
+        self.possible_agents = self.agents[:]
 
-        self.action_spaces = {i: spaces.Tuple((spaces.Discrete(3), spaces.Discrete(3))) for i in self.agents}  
-        self.observation_spaces = {   #since the action space is the same for both agents, there is no need to create a dictionary as we can just create one object without mapping
-        # like this spaces.Tuple((spaces.Discrete(3), spaces.Discrete(3))
+        self.action_spaces = {i: spaces.Tuple((spaces.Discrete(3), spaces.Discrete(3))) for i in self.agents}
+        self.observation_spaces = {
             i: spaces.Dict(
                 {
                     "observation": spaces.Box(
@@ -32,20 +31,21 @@ class raw_env(AECEnv):
                     ),
                     "action_mask": spaces.Box(low=0, high=1, shape=(3, 3), dtype=np.int8),
                 }
-            )
+            )   
             for i in self.agents
         }
 
-        self.rewards = {i: 0 for i in self.agents}  #delete this
-        self._cumulative_rewards = {i: 0 for i in self.agents}   #delete this
-        self.terminations = {i: False for i in self.agents} #delete this
-        self.truncations = {i: False for i in self.agents}  #delete this
+        self.rewards = {i: 0 for i in self.agents}
+        self._cumulative_rewards = {i: 0 for i in self.agents}  # Add this line
+        self.terminations = {i: False for i in self.agents}
+        self.truncations = {i: False for i in self.agents}
         self.infos = {i: {"legal_moves": [(row, col) for row in range(3) for col in range(3)]} for i in self.agents}
 
         self._agent_selector = agent_selector(self.agents)
         self.agent_selection = self._agent_selector.reset()
 
         self.render_mode = render_mode
+
 
 
     def observe(self, agent):
@@ -84,12 +84,13 @@ class raw_env(AECEnv):
         row, col = action
         assert self.board.squares[row, col] == 0, "played illegal move"
 
-        self.board.play_turn(self.agents.index(self.agent_selection), (row, col))
+        cur_agent_idx = self.agents.index(self.agent_selection)
+        self.board.play_turn(cur_agent_idx, (row, col))
 
         next_agent = self._agent_selector.next()
 
         if self.board.check_game_over():
-            winner = self.board.check_for_winner()
+            winner = self.board.check_for_winner(cur_agent_idx, (row, col))
 
             if winner == -1:
                 pass
@@ -99,6 +100,7 @@ class raw_env(AECEnv):
             else:
                 self.rewards[self.agents[1]] += 1
                 self.rewards[self.agents[0]] -= 1
+
 
             self.terminations = {i: True for i in self.agents}
 
