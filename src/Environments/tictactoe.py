@@ -17,15 +17,14 @@ class raw_env(AECEnv):
 
     def __init__(self, render_mode=None):
         super().__init__()
-        self.board = Board() ##instead of using another class, incorporte the functions of the board in this class / modify the board class enough
+        self.board = Board()
 
         self.agents = ["player_1", "player_2"]
-        self.possible_agents = self.agents[:]  ##remove this
+        self.possible_agents = self.agents[:]  #delete this
 
-        self.action_spaces = {i: spaces.Tuple((spaces.Discrete(3), spaces.Discrete(3))) for i in self.agents} 
-        #since the action space is the same for both agents, there is no need to create a dictionary as we can just create one object without mapping
+        self.action_spaces = {i: spaces.Tuple((spaces.Discrete(3), spaces.Discrete(3))) for i in self.agents}  
+        self.observation_spaces = {   #since the action space is the same for both agents, there is no need to create a dictionary as we can just create one object without mapping
         # like this spaces.Tuple((spaces.Discrete(3), spaces.Discrete(3))
-        self.observation_spaces = {
             i: spaces.Dict(
                 {
                     "observation": spaces.Box(
@@ -37,15 +36,17 @@ class raw_env(AECEnv):
             for i in self.agents
         }
 
-        self.rewards = {i: 0 for i in self.agents} #remove this
-        self.terminations = {i: False for i in self.agents}  #remove this
-        self.truncations = {i: False for i in self.agents} #remove this
-        self.infos = {i: {"legal_moves": [(row, col) for row in range(3) for col in range(3)]} for i in self.agents} #remove this
+        self.rewards = {i: 0 for i in self.agents}  #delete this
+        self._cumulative_rewards = {i: 0 for i in self.agents}   #delete this
+        self.terminations = {i: False for i in self.agents} #delete this
+        self.truncations = {i: False for i in self.agents}  #delete this
+        self.infos = {i: {"legal_moves": [(row, col) for row in range(3) for col in range(3)]} for i in self.agents}
 
         self._agent_selector = agent_selector(self.agents)
         self.agent_selection = self._agent_selector.reset()
 
         self.render_mode = render_mode
+
 
     def observe(self, agent):
         board_vals = self.board.squares
@@ -124,32 +125,27 @@ class raw_env(AECEnv):
 
     def render(self):
         if self.render_mode is None:
-            gym.logger.warn(
-                "You are calling render method without specifying any render mode."
-            )
+            gym.logger.warn("You are calling render method without specifying any render mode.")
             return
 
-        def getSymbol(input):
-            if input == 0:
-                return "-"
-            elif input == 1:
+        def get_symbol(input_value):
+            if input_value == 0:
+                return " "
+            elif input_value == 1:
                 return "X"
             else:
                 return "O"
 
-        board = list(map(getSymbol, self.board.squares.flatten()))
+        board = np.array([get_symbol(val) for val in self.board.squares.flatten()]).reshape(3, 3)
 
-        print(" " * 5 + "|" + " " * 5 + "|" + " " * 5)
-        print(f"  {board[0]}  " + "|" + f"  {board[1]}  " + "|" + f"  {board[2]}  ")
-        print("_" * 5 + "|" + "_" * 5 + "|" + "_" * 5)
+        horizontal_line = '-' * 12
+        for i in range(3):
+            row = '|'.join([f' {board[i, j]} ' for j in range(3)])
+            print(row)
+            if i < 2:
+                print(horizontal_line)
 
-        print(" " * 5 + "|" + " " * 5 + "|" + " " * 5)
-        print(f"  {board[3]}  " + "|" + f"  {board[4]}  " + "|" + f"  {board[5]}  ")
-        print("_" * 5 + "|" + "_" * 5 + "|" + "_" * 5)
 
-        print(" " * 5 + "|" + " " * 5 + "|" + " " * 5)
-        print(f"  {board[6]}  " + "|" + f"  {board[7]}  " + "|" + f"  {board[8]}  ")
-        print(" " * 5 + "|" + " " * 5 + "|" + " " * 5)
 
     def close(self):
         pass
