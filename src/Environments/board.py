@@ -3,11 +3,8 @@ import numpy as np
 class Board:
     def __init__(self):
         self.squares = np.zeros((3, 3), dtype=int)
-
-        self.calculate_winners()
-
-    def setup(self):
-        self.calculate_winners()
+        self.total_moves = 0
+        self.winner = None
 
     def play_turn(self, agent, pos):
         row, col = pos
@@ -17,45 +14,36 @@ class Board:
             self.squares[row, col] = 1
         elif agent == 1:
             self.squares[row, col] = 2
-        return
+        self.total_moves += 1
+        self.check_for_winner(agent, pos)
 
-    def calculate_winners(self):
-        winning_combinations = []
+    def check_for_winner(self, agent, pos):
+        if self.winner is not None:
+            return
 
-        # Vertical combinations
-        for col in range(3):
-            winning_combinations.append([(row, col) for row in range(3)])
+        row, col = pos
+        player_mark = agent + 1
+        row_marks = self.squares[row, :]
+        col_marks = self.squares[:, col]
+        diag_marks = self.squares.diagonal()
+        anti_diag_marks = np.fliplr(self.squares).diagonal()
 
-        # Horizontal combinations
-        for row in range(3):
-            winning_combinations.append([(row, col) for col in range(3)])
+        win_conditions = [
+            np.all(row_marks == player_mark),
+            np.all(col_marks == player_mark),
+            np.all(diag_marks == player_mark),
+            np.all(anti_diag_marks == player_mark),
+        ]
 
-        # Diagonal combinations
-        winning_combinations.append([(i, i) for i in range(3)])
-        winning_combinations.append([(i, 2 - i) for i in range(3)])
-
-        self.winning_combinations = winning_combinations
-
-    def check_for_winner(self):
-        winner = -1
-        for combination in self.winning_combinations:
-            states = [self.squares[row, col] for row, col in combination]
-            if all(x == 1 for x in states):
-                winner = 0
-            if all(x == 2 for x in states):
-                winner = 1
-        return winner
+        if any(win_conditions):
+            self.winner = agent
 
     def check_game_over(self):
-        winner = self.check_for_winner()
-
-        if winner == -1 and np.all(self.squares != 0):
+        if self.winner is not None:
             return True
-        elif winner in [0, 1]:
+        if self.total_moves == 9:
             return True
-        else:
-            return False
+        return False
 
     def __str__(self):
         return str(self.squares)
-

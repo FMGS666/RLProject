@@ -17,12 +17,14 @@ class raw_env(AECEnv):
 
     def __init__(self, render_mode=None):
         super().__init__()
-        self.board = Board()
+        self.board = Board() ##instead of using another class, incorporte the functions of the board in this class / modify the board class enough
 
         self.agents = ["player_1", "player_2"]
-        self.possible_agents = self.agents[:]
+        self.possible_agents = self.agents[:]  ##remove this
 
-        self.action_spaces = {i: spaces.Tuple((spaces.Discrete(3), spaces.Discrete(3))) for i in self.agents}
+        self.action_spaces = {i: spaces.Tuple((spaces.Discrete(3), spaces.Discrete(3))) for i in self.agents} 
+        #since the action space is the same for both agents, there is no need to create a dictionary as we can just create one object without mapping
+        # like this spaces.Tuple((spaces.Discrete(3), spaces.Discrete(3))
         self.observation_spaces = {
             i: spaces.Dict(
                 {
@@ -35,10 +37,10 @@ class raw_env(AECEnv):
             for i in self.agents
         }
 
-        self.rewards = {i: 0 for i in self.agents}
-        self.terminations = {i: False for i in self.agents}
-        self.truncations = {i: False for i in self.agents}
-        self.infos = {i: {"legal_moves": [(row, col) for row in range(3) for col in range(3)]} for i in self.agents}
+        self.rewards = {i: 0 for i in self.agents} #remove this
+        self.terminations = {i: False for i in self.agents}  #remove this
+        self.truncations = {i: False for i in self.agents} #remove this
+        self.infos = {i: {"legal_moves": [(row, col) for row in range(3) for col in range(3)]} for i in self.agents} #remove this
 
         self._agent_selector = agent_selector(self.agents)
         self.agent_selection = self._agent_selector.reset()
