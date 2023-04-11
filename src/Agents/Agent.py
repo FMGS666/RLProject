@@ -4,7 +4,7 @@ from tqdm import tqdm
 from typing import Callable
 from collections import defaultdict
 
-import os, sys, re, json
+import os, sys, re, json, time
 import gymnasium as gym
 
 from pettingzoo import AECEnv
@@ -54,6 +54,7 @@ class Agent(object):
 
         # initializing random numbers generator
         self._random_generator = np.random.RandomState(seed)
+        self.action_counts = np.zeros((self.grid_width, ))
 
     @staticmethod
     def __encode_observation(
@@ -135,7 +136,7 @@ class Agent(object):
             assert state_value.shape[0] == self._n_actions and len(state_value.shape) == 1, \
                 f"The action_values array has an incorrect shape of {state_value.shape}"
         greedy = self._random_generator.random() >= self.epsilon
-        if greedy:
+        if greedy and not np.all(state_value == 0):
             if count_action_type:
                 self.n_greedy_actions += 1
             best_action = state_value.argmax()

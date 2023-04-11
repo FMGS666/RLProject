@@ -53,10 +53,6 @@ class Connect4Environment(AECEnv):
         )
         self._agent_selector = agent_selector(self.agents)
         self.agent_selection = self._agent_selector.reset()
-        self.terminations = {agent: False for agent in self.agents}
-        self.truncations = {agent: False for agent in self.agents}
-        self.rewards = {agent: 0 for agent in self.agents}
-        self._cumulative_rewards = {agent: 0 for agent in self.agents}
         self.game_over = False
 
     def observation_space(
@@ -137,11 +133,8 @@ class Connect4Environment(AECEnv):
         """
         
         """
-        if self.truncations[self.agent_selection] or self.terminations[self.agent_selection]:
-            return self._was_dead_step(action)
         if self.legal_moves[action] != 1:
             self.game_over = True
-            self.rewards[self.agent_selection] -= 1
             return -100
         self.__update_board(action)
         self.__update_legal_moves(action)
@@ -149,18 +142,13 @@ class Connect4Environment(AECEnv):
         is_won = self.check_for_winner()
         next_agent = self._agent_selector.next()
         if is_won:
-            self.rewards[self.agent_selection] += 1
-            self.rewards[next_agent] -= 1
-            self.terminations = {i: True for i in self.agents}
             self.game_over = True
             return 100
         elif is_draw:
-            self.terminations = {i: True for i in self.agents}
             self.game_over = True
             return 0
         else:
             self.agent_selection = next_agent
-        self._accumulate_rewards()
         return 1
 
     def check_for_draw(

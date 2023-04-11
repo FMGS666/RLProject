@@ -97,6 +97,7 @@ class ExpectedSarsa(Agent):
             self,
             env: AECEnv, 
         ) -> None:
+        env.reset()
         idx = 0
         agent_to_play = env.agents[idx]
         obs, legal_moves = env.observe(agent_to_play).values()  
@@ -108,6 +109,7 @@ class ExpectedSarsa(Agent):
             self.__update_action_state_value(action, obs, obs1, reward)
             idx = (idx + 1) % 2
             obs = obs1
+            self.action_counts[action] += 1
 
     def __print_training_description_message(
             self, 
@@ -146,8 +148,8 @@ class ExpectedSarsa(Agent):
         ) -> None:
         for episode in tqdm(range(n_episodes)):
             self.__train_one_episode_against_itself(env)
-            if episode % 10 == 0 and self.verbose > 1:
-                print("\rEpisode {}/{}, Score: {}, Max score: {}".format(episode, n_episodes, episodes_scores[-1], self.max_score), end="")
+            if self.verbose > 1:
+                print("\rEpisode {}/{}, action_counts: {}".format(episode, n_episodes, self.action_counts), end="")
                 sys.stdout.flush()
         if self.max_score and dump:
             self._dump()
