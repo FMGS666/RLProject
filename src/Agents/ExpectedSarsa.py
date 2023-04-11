@@ -110,6 +110,7 @@ class ExpectedSarsa(Agent):
             idx = (idx + 1) % 2
             obs = obs1
             self.action_counts[action] += 1
+        self.winners_history.append(env.winner)
 
     def __print_training_description_message(
             self, 
@@ -154,3 +155,10 @@ class ExpectedSarsa(Agent):
                 sys.stdout.flush()
         if dump:
             self._dump(".\TrainedAgents\ExpectedSarsa")
+            
+
+    def load(
+            self, 
+            filename: str
+        ) -> None:
+        super(ExpectedSarsa, self)._load(filename)

@@ -1,6 +1,10 @@
 from src.Environments.Connect4 import *
 from src.Agents.ExpectedSarsa import *
 import pprint
+from tqdm import tqdm
+
+N_EPISODES = int(5e+4)
+SEED = 1024
 
 env = Connect4Environment()
 
@@ -29,10 +33,6 @@ alpha_grid = [
     1e-3
 ]
 
-N_EPISODES = int(5e+4)
-SEED = 1024
-
-
 agents = []
 for epsilon in epsilon_grid:
     for gamma in gamma_grid:
@@ -46,9 +46,6 @@ for epsilon in epsilon_grid:
             agents.append(agent)
 
 
-
-
-from tqdm import tqdm
 for agent in tqdm(agents):
     print("###############################################################")
     agent.train_n_episodes(env, N_EPISODES)

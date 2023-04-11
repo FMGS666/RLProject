@@ -39,9 +39,6 @@ class Connect4Environment(AECEnv):
                 agent: self.action_space for agent in self.agents
             }
         )
-        # self.legal_moves = spaces.Box(
-        #     low = 0, high = 1, shape = (self.grid_width, ), dtype = np.int8 
-        # )
         self.legal_moves = np.ones((self.grid_width, ), dtype = np.int8)
         self.observation_space = spaces.Dict(
             {
@@ -54,6 +51,7 @@ class Connect4Environment(AECEnv):
         self._agent_selector = agent_selector(self.agents)
         self.agent_selection = self._agent_selector.reset()
         self.game_over = False
+        self.winner = 0
 
     def observation_space(
             self, 
@@ -143,6 +141,7 @@ class Connect4Environment(AECEnv):
         next_agent = self._agent_selector.next()
         if is_won:
             self.game_over = True
+            self.winner = self.agents.index(self.agent_selection) + 1
             return 100
         elif is_draw:
             self.game_over = True

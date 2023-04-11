@@ -42,12 +42,6 @@ class Agent(object):
         # initializing the action-state matrix
         self.action_state_value_dictionary = defaultdict(np.ndarray)
 
-        self.observed_states = dict(self.action_state_value_dictionary).keys()
-
-        # initializing current score
-        self.current_score = 0
-        self.max_score = 0
-
         # initialize actions type counter
         self.n_greedy_actions = 0
         self.n_exploratory_actions = 0
@@ -55,6 +49,7 @@ class Agent(object):
         # initializing random numbers generator
         self._random_generator = np.random.RandomState(seed)
         self.action_counts = np.zeros((self.grid_width, ))
+        self.winners_history = []
 
     @staticmethod
     def __encode_observation(
@@ -78,7 +73,8 @@ class Agent(object):
         encoded_observation = self.__encode_observation(
             obs
         )
-        if encoded_observation in self.observed_states:
+        observed_states = dict(self.action_state_value_dictionary).keys()
+        if encoded_observation in observed_states:
             state_values = self.action_state_value_dictionary[encoded_observation]
         else:
             state_values = np.zeros((self.grid_width, ), dtype = np.float32)
@@ -109,7 +105,8 @@ class Agent(object):
         encoded_observation = self.__encode_observation(
             obs
         )
-        if encoded_observation in self.observed_states:
+        observed_states = dict(self.action_state_value_dictionary).keys()
+        if encoded_observation in observed_states:
             self.action_state_value_dictionary[encoded_observation][action] = value
         else:
             state_values = np.zeros((self.grid_width, ), dtype = np.float32)
@@ -160,23 +157,20 @@ class Agent(object):
     def __generate_description_string(
             self
         ) -> str:
-        description_string = f"{self.name}_maxScore{self.max_score}_eps{self.epsilon}_gamma{self.gamma}_alpha{self.alpha}"
+        description_string = f"{self.name}_eps{self.epsilon}_gamma{self.gamma}_alpha{self.alpha}"
         return description_string
 
     def generate_description_string():
         return self.__generate_description_string()
 
-    def _save_history(
-            self, 
-            episodes_lengths: list[int], 
-            episodes_scores: list[int],
-            path_name: str | Path = ".\ESHistory"
+    def __save_winners_history(
+            self,
+            path_name: str | Path = ".\TrainedAgents"
         ) -> None:
-        description_string = self.__generate_description_string() + ".json"
+        description_string = self.__generate_description_string() + "_winner_history.json"
         file_name = os.path.join(path_name, description_string)
         dump_dictionary = {
-            "episodes_lengths": episodes_lengths, 
-            "episodes_scores": episodes_scores
+            "winners_history": self.winners_history,
         }
         with open(file_name, "w") as file_dump:
             json.dump(dump_dictionary, file_dump)
@@ -194,10 +188,12 @@ class Agent(object):
         action_state_value_dictionary = {key: list([float(val) for val in value]) for key, value in self.action_state_value_dictionary.items()}
         with open(file_name, "w") as file_handle:
             json.dump(action_state_value_dictionary, file_handle)
+        self.__save_winners_history(path_name = path_name)
 
-    def load(
+    def _load(
             self, 
-            filename: str | Path
+            filename: str
         ) -> None:
-        action_value_matrix = np.load(filename)
-        self.action_state_value_matrix = action_value_matrix
+        with open(filename, "r") as file_handle:
+            json_data = json.load(file_handle)
+        self.action_state_value_dictionary = defaultdict(json_data)
