@@ -3,16 +3,10 @@ from src.Environments.TicTacToe.TicTacToe import *
 from src.Agents.ExpectedSarsa import *
 import pprint
 
-env = TicTacToeEnvironment()
-# print(env.legal_moves)
+env = Connect4Environment()
 
-# env.update_legal_moves((0,0))
-# print(env.legal_moves)
+agent = ExpectedSarsa()
 
-agent = ExpectedSarsa((3, 3), debug = 2)
-n_episodes = 1
+agent.load('TrainedAgents/ExpectedSarsaConnect4/ExpectedSarsa_eps0.1_gamma0.5_alpha0.1.json')
+agent.play_against_random(env)
 
-agent.train_n_episodes(env, n_episodes, dump = False)
-print(agent.action_state_value_dictionary)
-print(env.winner)
-print(env.legal_moves)

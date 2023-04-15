@@ -131,15 +131,13 @@ class Agent(object):
             if count_action_type:
                 self.n_greedy_actions += 1
             best_action = state_value.argmax() if isinstance(self.grid_width, int)\
-                else tuple(np.unravel_index(state_value.argmax(), state_value.shape))
-            print(f"action {best_action}")            
+                else tuple(np.unravel_index(state_value.argmax(), state_value.shape))          
             return best_action
         else:
             action = np.random.choice([idx for idx, element in enumerate(state_value)]) if isinstance(self.grid_width, int)\
                 else tuple(np.random.randint(0, size) for size in state_value.shape)
             if count_action_type:
-                self.n_exploratory_actions += 1
-            print(f"action {action}")            
+                self.n_exploratory_actions += 1            
             return action
     
     def _policy(
@@ -205,4 +203,5 @@ class Agent(object):
         ) -> None:
         with open(filename, "r") as file_handle:
             json_data = json.load(file_handle)
-        self.action_state_value_dictionary = defaultdict(json_data)
+        self.action_state_value_dictionary = defaultdict(list, json_data)
+        self.action_state_value_dictionary = {key: np.array(value) for key, value in self.action_state_value_dictionary.items()}
