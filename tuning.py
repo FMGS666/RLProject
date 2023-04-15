@@ -3,19 +3,25 @@ from src.Agents.ExpectedSarsa import *
 import pprint
 from tqdm import tqdm
 
-N_EPISODES = int(5e+4)
+
+def save_checkpoint(
+        idx: int,
+        filename: str = ".\checkpoint.txt"
+    ) -> None:
+    with open(filename, "w") as file_handle:
+        file_handle.write(str(idx + 1))
+
+N_EPISODES = int(1e+4)
 SEED = 1024
 
 env = Connect4Environment()
 
 
 epsilon_grid = [
+    5e-1,
     1e-1,
     1e-2, 
     1e-3,
-    2e-2,
-    2e-2, 
-    2e-3, 
 ]
 gamma_grid = [
     1, 
@@ -23,14 +29,11 @@ gamma_grid = [
     5e-1,
     25e-2
 ]
+
 alpha_grid = [
     1, 
     5e-1, 
-    1e-1, 
-    5e-2, 
-    1e-2, 
-    5e-3, 
-    1e-3
+    1e-1
 ]
 
 agents = []
@@ -45,8 +48,8 @@ for epsilon in epsilon_grid:
             )
             agents.append(agent)
 
-
-for agent in tqdm(agents):
+print(len(agents))
+for idx, agent in tqdm(enumerate(agents[1:])):
     print("###############################################################")
     agent.train_n_episodes(env, N_EPISODES)
-
+    save_checkpoint(idx)
