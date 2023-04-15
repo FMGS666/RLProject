@@ -104,8 +104,6 @@ class ExpectedSarsa(Agent):
             agent_to_play = env.agents[idx]
             obs1, legal_moves = env.observe(agent_to_play).values()
             action = self.policy(obs)
-            print(f"action {action}")
-            print(f"state_value_dict {self.action_state_value_dictionary}")
             reward = env.step(action)
             self.__update_action_state_value(action, obs, obs1, reward)
             idx = (idx + 1) % 2
@@ -154,7 +152,7 @@ class ExpectedSarsa(Agent):
                 print("\rEpisode {}/{}, action_counts: {}".format(episode, n_episodes, self.action_counts), end="")
                 sys.stdout.flush()
         if dump:
-            self._dump(".\TrainedAgents\ExpectedSarsa")
+            self._dump(".\TrainedAgents\ExpectedSarsaTicTacToe")
             
 
     def load(

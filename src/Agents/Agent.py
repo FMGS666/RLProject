@@ -84,7 +84,7 @@ class Agent(object):
     def _get_action_state_value(
             self,
             obs: np.ndarray, 
-            action: int,             
+            action: int | tuple,             
         ) -> float:
         state_value = self._get_state_value(
             obs
@@ -95,7 +95,7 @@ class Agent(object):
     def _set_action_state_value(
             self,
             obs: np.ndarray,
-            action: int,
+            action: int | tuple,
             value: float,              
         ) -> None:
         encoded_observation = self.__encode_observation(
@@ -131,14 +131,15 @@ class Agent(object):
             if count_action_type:
                 self.n_greedy_actions += 1
             best_action = state_value.argmax() if isinstance(self.grid_width, int)\
-                else np.unravel_index(state_value.argmax(), state_value.shape)            
+                else tuple(np.unravel_index(state_value.argmax(), state_value.shape))
+            print(f"action {best_action}")            
             return best_action
         else:
             action = np.random.choice([idx for idx, element in enumerate(state_value)]) if isinstance(self.grid_width, int)\
                 else tuple(np.random.randint(0, size) for size in state_value.shape)
-            # 
             if count_action_type:
                 self.n_exploratory_actions += 1
+            print(f"action {action}")            
             return action
     
     def _policy(
@@ -172,6 +173,17 @@ class Agent(object):
         with open(file_name, "w") as file_dump:
             json.dump(dump_dictionary, file_dump)
 
+    @staticmethod
+    def __array_to_list(array):
+        result = []
+        for row in array:
+            sublist = []
+            for element in row:
+                sublist.append(float(element))
+            result.append(sublist)
+        return result
+
+
     def _dump(
             self,
             path_name: str | Path = ".\TrainedAgents"
@@ -182,7 +194,7 @@ class Agent(object):
             "FileNameError: file_name provided is in the wrong format, please save array as .npy"
         if self.verbose:
             print(f"\nDumping agent:\n\tdescription_string -> {description_string}\n\n\tpath_name -> {path_name}\n\n\tfilename -> {file_name}")
-        action_state_value_dictionary = {key: list([float(val) for val in value]) for key, value in self.action_state_value_dictionary.items()}
+        action_state_value_dictionary = {key: self.__array_to_list(value) for key, value in self.action_state_value_dictionary.items()}
         with open(file_name, "w") as file_handle:
             json.dump(action_state_value_dictionary, file_handle)
         self.__save_winners_history(path_name = path_name)

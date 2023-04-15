@@ -53,22 +53,31 @@ class TicTacToeEnvironment(AECEnv):
         return {"observation": observation, "action_mask": self.legal_moves}
 
     def check_for_draw(
-            self
+            self,
+            cur_agent_idx: int, 
+            row: int, 
+            col: int
         ) -> bool:
         """
         
         """
-        return True if (np.all(self.legal_moves == 0) and not self.board.check_for_winner()) else False
+        return True if (np.all(self.legal_moves == 0) and not self.board.check_for_winner(cur_agent_idx, (row, col))) else False
 
     def __update_legal_moves(
             self, 
-            action: np.ndarray
+            action: tuple()
         ) -> None:
         self.legal_moves[action] = 0
 
+    def update_legal_moves(
+            self, 
+            action: tuple
+        ) -> None:
+        self.__update_legal_moves(action)
+
     def step(
             self, 
-            action: np.ndarray
+            action: tuple
         ) -> int:
         cur_agent_idx = self.agents.index(self.agent_selection)
         row, col = action
@@ -76,12 +85,9 @@ class TicTacToeEnvironment(AECEnv):
             self.game_over = True
             return -100
         self.__update_legal_moves(action)
-    
-        is_draw = self.check_for_draw()
+        is_draw = self.check_for_draw(cur_agent_idx, row, col)
         is_won = self.board.check_for_winner(cur_agent_idx, (row, col))
-
         self.board.play_turn(cur_agent_idx, (row, col))
-
         if is_won:
             self.game_over = True
             self.winner = self.agents.index(self.agent_selection) + 1
@@ -89,8 +95,9 @@ class TicTacToeEnvironment(AECEnv):
         elif is_draw:
             self.game_over = True
             return 0
-        next_agent = self._agent_selector.next()
-        return 1
+        else:
+            next_agent = self._agent_selector.next()
+            return 1
 
     def reset(
             self, 

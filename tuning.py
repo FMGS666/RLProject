@@ -1,4 +1,5 @@
-from src.Environments.Connect4 import *
+from src.Environments.Connect4.Connect4 import *
+from src.Environments.TicTacToe.TicTacToe import *
 from src.Agents.ExpectedSarsa import *
 import pprint
 from tqdm import tqdm
@@ -11,10 +12,10 @@ def save_checkpoint(
     with open(filename, "w") as file_handle:
         file_handle.write(str(idx + 1))
 
-N_EPISODES = int(1e+4)
+N_EPISODES = int(1e+5)
 SEED = 1024
 
-env = Connect4Environment()
+env = TicTacToeEnvironment()
 
 
 epsilon_grid = [
@@ -41,6 +42,7 @@ for epsilon in epsilon_grid:
     for gamma in gamma_grid:
         for alpha in alpha_grid:
             agent = ExpectedSarsa(
+                (3, 3),
                 alpha = alpha, 
                 epsilon = epsilon, 
                 gamma = gamma,
