@@ -111,6 +111,23 @@ class ExpectedSarsa(Agent):
             self.action_counts[action] += 1
         self.winners_history.append(env.winner)
 
+    def play_against_random(
+            self,
+            env: AECEnv,
+            target_idx: int = 0
+        ) -> None:
+        env.reset()
+        idx = 0
+        agent_to_play = env.agents[idx]
+        obs, legal_moves = env.observe(agent_to_play).values()  
+        while not env.game_over:
+            agent_to_play = env.agents[idx]
+            obs1, legal_moves = env.observe(agent_to_play).values()
+            action = self.policy(obs) if idx==target_idx else np.random.choice([idx for idx in range(self.grid_width)]) 
+            reward = env.step(action)
+            idx = (idx + 1) % 2
+            obs = obs1
+
     def __print_training_description_message(
             self, 
             n_episodes: int, 
