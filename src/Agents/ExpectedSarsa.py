@@ -5,7 +5,6 @@ class ExpectedSarsa(Agent):
     def __init__(
             self, 
             grid_width: int = 7, 
-            grid_height: int = 6, 
             epsilon: float = 1e-1,
             alpha: float = 5e-1, 
             gamma: float = 1e-0, 
@@ -16,7 +15,6 @@ class ExpectedSarsa(Agent):
         ) -> None:
         super(ExpectedSarsa, self).__init__(
             grid_width, 
-            grid_height, 
             epsilon = epsilon, 
             debug = debug,
             seed = seed, 
@@ -39,15 +37,18 @@ class ExpectedSarsa(Agent):
     def __compute_step_value(
             self, 
             obs1: np.ndarray,
-            reward
+            reward: float | int
         ) -> float:
         state_value = self._get_state_value(
             obs1, 
         )
-        greedy_action = np.argmax(state_value)
-        policy_distribution = np.full(shape = self.grid_width, fill_value = self.epsilon/self.grid_width)
+        greedy_action = state_value.argmax() if isinstance(self.grid_width, int)\
+            else np.unravel_index(state_value.argmax(), state_value.shape)
+        policy_distribution = np.full(shape = self.grid_width, fill_value = self.epsilon/self.grid_width) if isinstance(self.grid_width, int)\
+            else np.full(shape = self.grid_width, fill_value = self.epsilon/len(self.grid_width))
         policy_distribution[greedy_action] += (1 - self.epsilon)
-        action_state_value = np.dot(state_value.T, policy_distribution)
+        action_state_value = np.dot(state_value.T, policy_distribution) if isinstance(self.grid_width, int)\
+            else np.dot(state_value.flatten().T, policy_distribution.flatten())
         sarsa_value = reward + self.gamma * action_state_value
         return sarsa_value
     
@@ -77,8 +78,6 @@ class ExpectedSarsa(Agent):
             obs1: np.ndarray, 
             reward: float, 
         ) -> None:
-        if self.debug:
-            print(f"\n__update_action_state_value\n\tobs {obs} info {info}, {type(obs)} type(info) {type(info)}")
         update_value = self.__compute_update_value(
             action, 
             obs, 
@@ -86,7 +85,7 @@ class ExpectedSarsa(Agent):
             reward, 
         )
         if self.debug > 1:
-            print(f"\n\nupdate_value {update_value} for obs {obs}, info {info[self._info_field][-1]}")
+            print(f"\n\nupdate_value {update_value} for obs {obs}")
         self._set_action_state_value(
             obs,
             action, 
@@ -105,6 +104,8 @@ class ExpectedSarsa(Agent):
             agent_to_play = env.agents[idx]
             obs1, legal_moves = env.observe(agent_to_play).values()
             action = self.policy(obs)
+            print(f"action {action}")
+            print(f"state_value_dict {self.action_state_value_dictionary}")
             reward = env.step(action)
             self.__update_action_state_value(action, obs, obs1, reward)
             idx = (idx + 1) % 2
@@ -126,7 +127,6 @@ class ExpectedSarsa(Agent):
         Parameters of the environment:
 
             grid_width ->  {self.grid_width}
-            grid_height -> {self.grid_height}
 
         Parameters of the agent: 
 

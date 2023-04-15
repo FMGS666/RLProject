@@ -17,8 +17,7 @@ import numpy as np
 class Agent(object):
     def __init__(
             self, 
-            grid_width: int = 7, 
-            grid_height: int = 6,
+            grid_width: tuple | int = 7, 
             epsilon: float = 1e-1,
             alpha: float = 5e-1,
             gamma: float = 1e-0, 
@@ -30,7 +29,6 @@ class Agent(object):
         
         # initializing the attributes
         self.grid_width = grid_width
-        self.grid_height = grid_height
         self.epsilon = epsilon
         self.debug = debug
         self.seed = seed
@@ -48,7 +46,8 @@ class Agent(object):
 
         # initializing random numbers generator
         self._random_generator = np.random.RandomState(seed)
-        self.action_counts = np.zeros((self.grid_width, ))
+        self.action_counts = np.zeros((self.grid_width, )) if isinstance(self.grid_width, int)\
+            else np.zeros(self.grid_width)
         self.winners_history = []
 
     @staticmethod
@@ -77,12 +76,9 @@ class Agent(object):
         if encoded_observation in observed_states:
             state_values = self.action_state_value_dictionary[encoded_observation]
         else:
-            state_values = np.zeros((self.grid_width, ), dtype = np.float32)
+            state_values = np.zeros((self.grid_width, ), dtype = np.float32) if isinstance(self.grid_width, int)\
+                else np.zeros(self.grid_width)
             self.action_state_value_dictionary[encoded_observation] = state_values
-        assert (
-            state_values.shape[0] == self.grid_width and 
-            len(state_values.shape) == 1
-        ), f"state value matrix has wrong shape of {state_values.shape}"
         return state_values
 
     def _get_action_state_value(
@@ -109,7 +105,8 @@ class Agent(object):
         if encoded_observation in observed_states:
             self.action_state_value_dictionary[encoded_observation][action] = value
         else:
-            state_values = np.zeros((self.grid_width, ), dtype = np.float32)
+            state_values = np.zeros((self.grid_width, ), dtype = np.float32) if isinstance(self.grid_width, int)\
+                else np.zeros(self.grid_width, dtype = np.float32)
             state_values[action] = value
             self.action_state_value_dictionary[encoded_observation] = state_values
 
@@ -125,21 +122,21 @@ class Agent(object):
             self, 
             obs: np.ndarray, 
             count_action_type: bool = False, 
-        ) -> int:
+        ) -> int | np.ndarray:
         state_value = self._get_state_value(
             obs,
         )
-        if self.debug:    
-            assert state_value.shape[0] == self._n_actions and len(state_value.shape) == 1, \
-                f"The action_values array has an incorrect shape of {state_value.shape}"
         greedy = self._random_generator.random() >= self.epsilon
         if greedy and not np.all(state_value == 0):
             if count_action_type:
                 self.n_greedy_actions += 1
-            best_action = state_value.argmax()
+            best_action = state_value.argmax() if isinstance(self.grid_width, int)\
+                else np.unravel_index(state_value.argmax(), state_value.shape)            
             return best_action
         else:
-            action = np.random.choice([idx for idx, element in enumerate(state_value)])
+            action = np.random.choice([idx for idx, element in enumerate(state_value)]) if isinstance(self.grid_width, int)\
+                else tuple(np.random.randint(0, size) for size in state_value.shape)
+            # 
             if count_action_type:
                 self.n_exploratory_actions += 1
             return action

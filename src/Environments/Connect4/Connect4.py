@@ -26,6 +26,7 @@ class Connect4Environment(AECEnv):
         """
         
         """
+        super().__init__()
         self.debug = debug
         self.grid_height = grid_height
         self.grid_width = grid_width
@@ -52,24 +53,6 @@ class Connect4Environment(AECEnv):
         self.agent_selection = self._agent_selector.reset()
         self.game_over = False
         self.winner = 0
-
-    def observation_space(
-            self, 
-            agent: str
-        ) -> spaces.Box:
-        """
-        
-        """
-        return self.observation_spaces[agent]
-
-    def action_space(
-            self, 
-            agent: str
-        ) -> spaces.Box:
-        """
-        
-        """
-        return self.action_spaces[agent]
 
     def observe(
             self, 
@@ -103,12 +86,6 @@ class Connect4Environment(AECEnv):
         legal_moves = np.argwhere(self.board[0, :] != 0)
         for legal_move in legal_moves:
             self.legal_moves[legal_move] = 0
-
-    def update_legal_moves(
-            self, 
-            action: int
-        ) -> None:
-        return self.__update_legal_moves(action)
 
     def __update_board(
             self, 
@@ -146,8 +123,7 @@ class Connect4Environment(AECEnv):
         elif is_draw:
             self.game_over = True
             return 0
-        else:
-            self.agent_selection = next_agent
+        self.agent_selection = next_agent
         return 1
 
     def check_for_draw(

@@ -34,9 +34,9 @@ class Board:
             np.all(diag_marks == player_mark),
             np.all(anti_diag_marks == player_mark),
         ]
-
         if any(win_conditions):
-            self.winner = agent
+            return True
+        return False
 
     def check_game_over(self):
         if self.winner is not None:

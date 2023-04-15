@@ -1,2 +1,5 @@
 TrainedAgents/
 *.json
+*.txt
+
+__pycache__
