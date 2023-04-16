@@ -51,7 +51,7 @@ for epsilon in epsilon_grid:
             agents.append(agent)
 
 print(len(agents))
-for idx, agent in tqdm(enumerate(agents[1:])):
+for idx, agent in tqdm(enumerate(agents)):
     print("###############################################################")
-    agent.train_n_episodes(env, N_EPISODES)
+    agent.train_n_episodes(env, N_EPISODES, dump_dir = "TrainedAgents\ExpectedSarsaTicTacToe")
     save_checkpoint(idx)

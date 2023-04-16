@@ -1,15 +1,9 @@
-from src.Environments.tictactoe import *
+from src.Environments.TicTacToe.TicTacToe import *
+from src.Agents.ExpectedSarsa import ExpectedSarsa
 
 
+n_episodes = 1
+env = TicTacToeEnvironment()
+agent = ExpectedSarsa((3, 3), debug = 2)
 
-
-env = raw_env(render_mode="human")
-
-
-env.step((0, 0)) 
-env.step((1, 1)) 
-env.step((0, 1))  
-env.step((1, 2)) 
-env.step((0, 2))  
-
-env.render()
+agent.train_n_episodes(env, n_episodes, dump = False)

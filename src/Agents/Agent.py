@@ -192,7 +192,8 @@ class Agent(object):
             "FileNameError: file_name provided is in the wrong format, please save array as .npy"
         if self.verbose:
             print(f"\nDumping agent:\n\tdescription_string -> {description_string}\n\n\tpath_name -> {path_name}\n\n\tfilename -> {file_name}")
-        action_state_value_dictionary = {key: self.__array_to_list(value) for key, value in self.action_state_value_dictionary.items()}
+        action_state_value_dictionary = {key: self.__array_to_list(value) for key, value in self.action_state_value_dictionary.items()} if isinstance(self.grid_width, tuple) else\
+            {key: list([float(val) for val in value]) for key, value in self.action_state_value_dictionary.items()}
         with open(file_name, "w") as file_handle:
             json.dump(action_state_value_dictionary, file_handle)
         self.__save_winners_history(path_name = path_name)

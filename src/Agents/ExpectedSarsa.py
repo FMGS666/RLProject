@@ -97,15 +97,16 @@ class ExpectedSarsa(Agent):
             env: AECEnv, 
         ) -> None:
         env.reset()
-        idx = 0
-        agent_to_play = env.agents[idx]
-        obs, legal_moves = env.observe(agent_to_play).values()  
+        idx = 0 
         while not env.game_over:
             agent_to_play = env.agents[idx]
-            obs1, legal_moves = env.observe(agent_to_play).values()
+            obs, legal_moves = env.observe(agent_to_play).values()
             action = self.policy(obs)
             reward = env.step(action)
+            obs1, legal_moves = env.observe(agent_to_play).values()
             self.__update_action_state_value(action, obs, obs1, reward)
+            if self.debug:
+                print(self.action_state_value_dictionary)
             idx = (idx + 1) % 2
             obs = obs1
             self.action_counts[action] += 1
@@ -123,7 +124,8 @@ class ExpectedSarsa(Agent):
         while not env.game_over:
             agent_to_play = env.agents[idx]
             obs1, legal_moves = env.observe(agent_to_play).values()
-            action = self.policy(obs) if idx==target_idx else np.random.choice([idx for idx in range(self.grid_width)]) 
+            action = self.policy(obs) if idx==target_idx else np.random.choice([idx for idx in range(self.grid_width)]) if isinstance(self.grid_width, int)\
+                else (np.random.choice([idx for idx in range(self.grid_width[0])]), np.random.choice([idx for idx in range(self.grid_width[0])]))
             reward = env.step(action)
             idx = (idx + 1) % 2
             obs = obs1
@@ -160,7 +162,8 @@ class ExpectedSarsa(Agent):
             env: AECEnv, 
             n_episodes: int, 
             patience: int = 1e+6,
-            dump: bool = True 
+            dump: bool = True,
+            dump_dir: str = ".\TrainedAgents\ExpectedSarsaTicTacToe"
         ) -> None:
         if self.verbose:
             self.__print_training_description_message(n_episodes)
@@ -170,7 +173,7 @@ class ExpectedSarsa(Agent):
                 print("\rEpisode {}/{}, action_counts: {}".format(episode, n_episodes, self.action_counts), end="")
                 sys.stdout.flush()
         if dump:
-            self._dump(".\TrainedAgents\ExpectedSarsaTicTacToe")
+            self._dump(dump_dir)
             
 
     def load(

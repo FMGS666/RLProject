@@ -2,6 +2,7 @@ from src.Environments.Connect4.Connect4 import *
 from src.Environments.TicTacToe.TicTacToe import *
 from src.Agents.ExpectedSarsa import *
 import pprint
+from tqdm import tqdm
 
 env = Connect4Environment()
 
@@ -87,10 +88,12 @@ def find_path_with_best_params_eps(agent, env, n):
     return results
 """
 def find_path_with_best_params(agent, env, n, param_to_fix):
-    eps_values = [0.001, 0.01, 0.1, 0.5]
-    gamma_values = [0.25, 0.5, 0.75, 1]
-    alpha_values = [0.1, 0.5, 1]
-
+    # eps_values = [0.001, 0.01, 0.1, 0.5]
+    # gamma_values = [0.25, 0.5, 0.75, 1]
+    # alpha_values = [0.1, 0.5, 1]
+    eps_values = [0.5]
+    gamma_values = [1]
+    alpha_values = [1]
     results = {}
 
     if param_to_fix not in ["eps", "gamma", "alpha"]:
@@ -113,7 +116,7 @@ def find_path_with_best_params(agent, env, n, param_to_fix):
                 wins = 0
                 draws = 0
                 losses = 0
-                file_name = f'TrainedAgents/ExpectedSarsaConnect4/ExpectedSarsa_eps{eps}_gamma{gamma}_alpha{alpha}.json'
+                file_name = f'TrainedAgents\ExpectedSarsaTicTacToe\ExpectedSarsa_eps0.1_gamma1_alpha1.json'
                 agent.load(file_name)
                 for i in range(n):
                     result = agent.play_against_random(env)
@@ -162,17 +165,17 @@ def plot_scores(results, param_to_fix):
 #plot_scores(results, param_to_fix="gamma")  # or "alpha" or "gamma"
 
 
-while(wins<440):
-    wins=0
-    losses=0 
-    for i in range(1000):
-        agent.load('TrainedAgents/ExpectedSarsaConnect4/ExpectedSarsa_eps0.01_gamma0.25_alpha0.1.json')
-        result= agent.play_against_random(env)
-        if result==1:
-            wins+=1
-        elif result==2:
-            losses+=1
-    print(wins)
+wins=0
+losses=0 
+agent.load('TrainedAgents\ExpectedSarsaConnect4\ExpectedSarsa_eps0.5_gamma1_alpha1.json')
+
+for i in tqdm(range(1000)):
+    result= agent.play_against_random(env)
+    if result==1:
+        wins+=1
+    elif result==2:
+        losses+=1
+print(wins)
     
         
 
