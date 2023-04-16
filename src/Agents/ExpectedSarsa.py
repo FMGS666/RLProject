@@ -127,6 +127,7 @@ class ExpectedSarsa(Agent):
             reward = env.step(action)
             idx = (idx + 1) % 2
             obs = obs1
+        return env.winner
 
     def __print_training_description_message(
             self, 
